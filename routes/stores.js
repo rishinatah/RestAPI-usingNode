@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET users listing. */
+/* GET store listing. */
 
 router.get('/', function(req, res, next) {
 	sql.query('SELECT * FROM store WHERE store_id=' + req.query.id +
@@ -10,5 +10,7 @@ router.get('/', function(req, res, next) {
 	res.send(query_res);
 	});
 });
+
+//e.g http://localhost:3000/stores?offset=0&limit=10
 
 module.exports = router;
