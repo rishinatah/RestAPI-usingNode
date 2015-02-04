@@ -2,13 +2,11 @@ var express = require('express');
 var router = express.Router();
 
 /* GET rental listing. */
-var pagination = function(req,res){
-
+var pagination = function(req,res,fields){
 	sql.query(
 		'SELECT rental_id FROM rental ORDER BY rental_id DESC LIMIT 1'
 	).then(function(query_res) {
-		last_num = query_res;
-		res.send(last_num);
+		last_num = query_res[0].rental_id;
 	});
 
 	if (!req.query.offset){
@@ -19,7 +17,7 @@ var pagination = function(req,res){
 	}
 
 	sql.query(
-	    'SELECT * FROM rental LIMIT ' + req.query.limit +
+	    'SELECT ' + fields + ' FROM rental LIMIT ' + req.query.limit +
 	    ' OFFSET ' + req.query.offset
 	).then(function(query_res) {
 
@@ -27,19 +25,31 @@ var pagination = function(req,res){
 	var prev_num = parseInt(req.query.offset)-parseInt(req.query.limit);
 	var lastpage_num = parseInt(last_num)-parseInt(req.query.limit);
 
-	var links = [
-			{rel:"next", href:req.protocol + '//:' + req.hostname +
+	if(next_num>last_num) {
+		var next_link = {rel:"next", href:''}
+	} else {
+		var next_link = {rel:"next", href:req.protocol + '//:' + req.hostname +
 			':' + req.app.locals.settings.port+req.baseUrl 
 			+ '?offset=' + next_num
-			+ '&limit=' + req.query.limit},
+			+ '&limit=' + req.query.limit}
+	}
+
+	if(prev_num<0) {
+		var prev_link = {rel:"prev", href:''}
+	} else {
+		var prev_link = {rel:"prev", href:req.protocol + '//:' + req.hostname +
+			':' + req.app.locals.settings.port+req.baseUrl 
+			+ '?offset=' + prev_num
+			+ '&limit=' + req.query.limit}
+	}
+
+	var links = [
+			next_link,
 
 			{rel:"self", href:req.protocol+'//:'+req.hostname+
 			':'+req.app.locals.settings.port+req.originalUrl},
 
-			{rel:"prev", href:req.protocol + '//:' + req.hostname +
-			':' + req.app.locals.settings.port+req.baseUrl 
-			+ '?offset=' + prev_num
-			+ '&limit=' + req.query.limit},
+			prev_link,
 
 			{rel:"last", href:req.protocol + '//:' + req.hostname +
 			':' + req.app.locals.settings.port+req.baseUrl 
@@ -55,7 +65,7 @@ var pagination = function(req,res){
 	var pagination_res = {data:query_res, links:links};
 
 	if(req.query.offset>last_num){
-		res.send('OUT OF BOUND');
+		res.send('out of bound');
 	}else{
 		res.send(pagination_res);
 	}
@@ -63,13 +73,16 @@ var pagination = function(req,res){
 	});
 };
 
-var projection = function(req,res){};
+var projection = function(req,res){
+	pagination(req, res, req.query.fields);
+};
+
 
 router.get('/', function(req, res){
 	if(req.query.fields)
 		return projection(req, res);
 	else
-		return pagination(req, res);
+		return pagination(req, res, '*');
 });
 //e.g http://localhost:3000/rentals?offset=0&limit=10
 
