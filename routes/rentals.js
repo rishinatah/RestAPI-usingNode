@@ -15,4 +15,11 @@ router.get('/', function(req, res){
 });
 //e.g http://localhost:3000/rentals?offset=0&limit=10
 
+router.get('/rentals/:id', function(req, res) {
+	sql.query('SELECT * FROM rental WHERE rental_id=' + req.params.id)
+	.then(function(query_res) {
+	res.send(query_res);
+	});
+});
+
 module.exports = router;

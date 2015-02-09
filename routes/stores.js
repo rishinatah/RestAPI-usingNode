@@ -3,14 +3,16 @@ var router = express.Router();
 
 /* GET store listing. */
 
-router.get('/', function(req, res, next) {
-	sql.query('SELECT * FROM store WHERE store_id=' + req.query.id +
-	' AND address_id=' + req.query.addr)
-	.then(function(query_res) {
-	res.send(query_res);
-	});
-});
+projection = function(req,res){
+  pagination(req, res, req.query.fields, 'store');
+};
 
+router.get('/', function(req, res){
+	if(req.query.fields)
+		return projection(req, res);
+	else
+		return pagination(req, res, '*', 'store');
+});
 //e.g http://localhost:3000/stores?offset=0&limit=10
 
 module.exports = router;
